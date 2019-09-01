@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
+  m_Name: ModConfig
+  m_EditorClassIdentifier: 
+  id: ForgetMeNow
+  title: Forget Me Now
+  author: Espik
+  description: 'Forget Me Now v1.302
+
+    "No, this is not a boss module. Stop being judgemental."
+
+
+    Module ID: ForgetMeNow
+
+
+    Manual: https://ktane.timwi.de/HTML/Forget%20Me%20Now.html
+
+
+    Source Code: https://github.com/Espik/Forget-Me-Now
+
+
+    Author: Espik
+
+
+    Inspiration & some assets: Hexicube'
+  version: v1.302
+  outputFolder: build
+  previewImage: {fileID: 2800000, guid: fe057b50926cd3c45a6f85d13419be1b, type: 3}
