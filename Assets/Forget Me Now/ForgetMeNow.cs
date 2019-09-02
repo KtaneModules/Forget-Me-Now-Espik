@@ -425,7 +425,7 @@ public class ForgetMeNow : MonoBehaviour {
         int progress = moduleCount;
         if (progress < solutionDigits.Length) {
             yield return "Forget Me Now";
-            ButtonPress(digits[0]);
+            Buttons[digits[0]].OnInteract();
             yield break;
         }
         yield return "Forget Me Now";
