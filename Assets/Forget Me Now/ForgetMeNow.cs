@@ -10,7 +10,7 @@ public class ForgetMeNow : MonoBehaviour {
     public KMBombInfo Bomb;
     public KMBombModule Module;
 
-    public KMSelectable Button0, Button1, Button2, Button3, Button4, Button5, Button6, Button7, Button8, Button9;
+    public KMSelectable[] Buttons;
     public Renderer[] Lights;
     public Material[] LightColors;
 
@@ -36,7 +36,7 @@ public class ForgetMeNow : MonoBehaviour {
 
     private int stage = 0; // Stage number
 
-    private const int STAGES = 47;
+    private const int STAGES = 48;
 
     // "Here we go!" voice clip
     private bool hereWeGo = false;
@@ -61,21 +61,18 @@ public class ForgetMeNow : MonoBehaviour {
         moduleId = moduleIdCounter++;
 
         // Delegation
-        Button0.OnInteract += delegate () { Pressed0(); return false; };
-        Button1.OnInteract += delegate () { Pressed1(); return false; };
-        Button2.OnInteract += delegate () { Pressed2(); return false; };
-        Button3.OnInteract += delegate () { Pressed3(); return false; };
-        Button4.OnInteract += delegate () { Pressed4(); return false; };
-        Button5.OnInteract += delegate () { Pressed5(); return false; };
-        Button6.OnInteract += delegate () { Pressed6(); return false; };
-        Button7.OnInteract += delegate () { Pressed7(); return false; };
-        Button8.OnInteract += delegate () { Pressed8(); return false; };
-        Button9.OnInteract += delegate () { Pressed9(); return false; };
+        for (int i = 0; i < Buttons.Length; i++) {
+            int j = i;
+            Buttons[i].OnInteract += delegate () {
+                ButtonPress(j);
+                return false;
+            };
+        }
     }
 
     // Gets edgework and sets up calculations
     private void Start () {
-        moduleCount = STAGES; // Placeholder
+        moduleCount = STAGES;
         moduleCount = Bomb.GetSolvableModuleNames().Count(); // Uncomment this to get the stages properly
 
         lastDigit = Bomb.GetSerialNumberNumbers().Last();
@@ -178,61 +175,10 @@ public class ForgetMeNow : MonoBehaviour {
     }
 
 
-    // Pressing the buttons
-    private void Pressed0() {
-        Button0.AddInteractionPunch(0.2f);
-        ButtonPress(0);
-    }
-
-    private void Pressed1() {
-        Button1.AddInteractionPunch(0.2f);
-        ButtonPress(1);
-    }
-
-    private void Pressed2() {
-        Button2.AddInteractionPunch(0.2f);
-        ButtonPress(2);
-    }
-
-    private void Pressed3() {
-        Button3.AddInteractionPunch(0.2f);
-        ButtonPress(3);
-    }
-
-    private void Pressed4() {
-        Button4.AddInteractionPunch(0.2f);
-        ButtonPress(4);
-    }
-
-    private void Pressed5() {
-        Button5.AddInteractionPunch(0.2f);
-        ButtonPress(5);
-    }
-
-    private void Pressed6() {
-        Button6.AddInteractionPunch(0.2f);
-        ButtonPress(6);
-    }
-
-    private void Pressed7() {
-        Button7.AddInteractionPunch(0.2f);
-        ButtonPress(7);
-    }
-
-    private void Pressed8() {
-        Button8.AddInteractionPunch(0.2f);
-        ButtonPress(8);
-    }
-
-    private void Pressed9() {
-        Button9.AddInteractionPunch(0.2f);
-        ButtonPress(9);
-    }
-
-
     // Button press
     private void ButtonPress(int i) {
         Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, gameObject.transform);
+        Buttons[i].AddInteractionPunch(0.2f);
 
         bool struck = false;
 
@@ -402,7 +348,7 @@ public class ForgetMeNow : MonoBehaviour {
             StageScreen.text = 0 + stageNo.ToString();
     }
 
-
+    
     // Twitch Plays - borrowed code from Forget Me Not with some edits
 #pragma warning disable 414
     private string TwitchHelpMessage = "Press one button with \"!{0} press 5\", or enter the sequence with \"!{0} press 531820...\". You may use spaces and commas.";
@@ -427,7 +373,7 @@ public class ForgetMeNow : MonoBehaviour {
     private IEnumerator Solver() {
         while (stage < solutionDigits.Length) {
             yield return new WaitForSeconds(0.05f);
-            ButtonPress(solutionDigits[stage]);
+            Buttons[solutionDigits[stage]].OnInteract();
         }
     }
 
@@ -485,9 +431,7 @@ public class ForgetMeNow : MonoBehaviour {
         yield return "Forget Me Now";
 
         foreach (int d in digits) {
-            Button5.AddInteractionPunch(0.2f);
-            ButtonPress(d);
-            
+            Buttons[d].OnInteract();
             yield return new WaitForSeconds(0.05f);
         }
         yield break;
