@@ -403,7 +403,7 @@ public class ForgetMeNow : MonoBehaviour {
     }
 
 
-    // Twitch Plays - borrowed code from Forget Me Not
+    // Twitch Plays - borrowed code from Forget Me Not with some edits
 #pragma warning disable 414
     private string TwitchHelpMessage = "Press one button with \"!{0} press 5\", or enter the sequence with \"!{0} press 531820...\". You may use spaces and commas.";
 #pragma warning restore 414
