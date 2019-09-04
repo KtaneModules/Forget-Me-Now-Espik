@@ -193,6 +193,7 @@ public class ForgetMeNow : MonoBehaviour {
 
             case 1: // Activated
                 Debug.LogFormat("[Forget Me Now #{0}] The module struck because a button was pressed when digits were still being displayed!", moduleId);
+                Audio.PlaySoundAtTransform("FMNow_TooEarly", transform);
                 GetComponent<KMBombModule>().HandleStrike();
                 break;
 
@@ -220,8 +221,7 @@ public class ForgetMeNow : MonoBehaviour {
                 if (stage == moduleCount) {
                     Debug.LogFormat("[Forget Me Now #{0}] Module solved!", moduleId);
                     moduleStatus = 3;
-                    //Audio.PlaySoundAtTransform("FMNow_WeDidItReddit", transform); // Unused until I find a sound effect that says "We did it, Reddit!"
-                    Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, gameObject.transform);
+                    Audio.PlaySoundAtTransform("FMNow_WeDidItReddit", transform);
                     GetComponent<KMBombModule>().HandlePass();
                     hereWeGo = false;
                 }

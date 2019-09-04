@@ -14,9 +14,9 @@ MonoBehaviour:
   id: ForgetMeNow
   title: Forget Me Now
   author: Espik
-  description: 'Forget Me Now v1.401
+  description: 'Forget Me Now v1.5
 
-    "No, this is not a boss module. Stop being judgemental."
+    No, this is not a boss module. Stop being judgemental."
 
 
     Module ID: ForgetMeNow
@@ -32,6 +32,6 @@ MonoBehaviour:
 
 
     Inspiration & some assets: Hexicube'
-  version: v1.401
+  version: v1.5
   outputFolder: build
   previewImage: {fileID: 2800000, guid: fe057b50926cd3c45a6f85d13419be1b, type: 3}
