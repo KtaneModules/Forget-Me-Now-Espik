@@ -36,13 +36,21 @@ public class ForgetMeNow : MonoBehaviour {
 
     private int stage = 0; // Stage number
 
-    private const int STAGES = 48;
+    private bool autosolved = false; // Module was autosolved
+
+    private int moduleStrikes = 0; // Number of times module has struck
+
+    // Testing purposes only
+    private const int STAGES = 1;
+    private const bool USETEST = false;
+    private const bool FASTMODE = false;
 
     // "Here we go!" voice clip
     private bool hereWeGo = false;
 
     private int moduleStatus = 0;
-    /* 0: Unactivated
+    /* -1: Resetting
+     * 0: Unactivated
      * 1: Activated
      * 2: Input mode
      * 3: Solved
@@ -72,8 +80,11 @@ public class ForgetMeNow : MonoBehaviour {
 
     // Gets edgework and sets up calculations
     private void Start () {
-        moduleCount = STAGES;
-        moduleCount = Bomb.GetSolvableModuleNames().Count(); // Uncomment this to get the stages properly
+        if (USETEST == true)
+            moduleCount = STAGES;
+
+        else
+            moduleCount = Bomb.GetSolvableModuleNames().Count();
 
         lastDigit = Bomb.GetSerialNumberNumbers().Last();
         firstDigit = Bomb.GetSerialNumberNumbers().First();
@@ -169,7 +180,7 @@ public class ForgetMeNow : MonoBehaviour {
             solutionLogger += solutionDigits[i].ToString();
         }
 
-        Debug.LogFormat("[Forget Me Now #{0}] Stage count: {1}.", moduleId, moduleCount);
+        Debug.LogFormat("[Forget Me Now #{0}] Stage count: {1}", moduleId, moduleCount);
         Debug.LogFormat("[Forget Me Now #{0}] Displayed digits: {1}", moduleId, displayLogger);
         Debug.LogFormat("[Forget Me Now #{0}] Solution digits: {1}", moduleId, solutionLogger);
     }
@@ -193,6 +204,14 @@ public class ForgetMeNow : MonoBehaviour {
 
             case 1: // Activated
                 Debug.LogFormat("[Forget Me Now #{0}] The module struck because a button was pressed when digits were still being displayed!", moduleId);
+                moduleStrikes++;
+                Audio.PlaySoundAtTransform("FMNow_TooEarly", transform);
+                GetComponent<KMBombModule>().HandleStrike();
+                break;
+
+            case -1: // Resetting
+                Debug.LogFormat("[Forget Me Now #{0}] The module struck because a button was pressed when the display was resetting!", moduleId);
+                moduleStrikes++;
                 Audio.PlaySoundAtTransform("FMNow_TooEarly", transform);
                 GetComponent<KMBombModule>().HandleStrike();
                 break;
@@ -208,7 +227,18 @@ public class ForgetMeNow : MonoBehaviour {
 
                 else {
                     Debug.LogFormat("[Forget Me Now #{0}] The module struck from an incorrect digit entered at stage {1}. The displayed digit was a {2} for that stage.", moduleId, stage + 1, displayDigits[stage]);
-                    Audio.PlaySoundAtTransform("FMNow_ThisIsntCorrect", transform);
+                    moduleStrikes++;
+
+                    if (moduleStrikes % 3 == 0) {
+                        int rand = UnityEngine.Random.Range(0, 2);
+
+                        if (rand == 0) Audio.PlaySoundAtTransform("FMNow_TripleStrike2", transform);
+                        else Audio.PlaySoundAtTransform("FMNow_TripleStrike1", transform);
+                }
+
+                    else
+                        Audio.PlaySoundAtTransform("FMNow_ThisIsntCorrect", transform);
+                    
                     GetComponent<KMBombModule>().HandleStrike();
                     litButton = displayDigits[stage];
                     UpdateLED();
@@ -221,13 +251,19 @@ public class ForgetMeNow : MonoBehaviour {
                 if (stage == moduleCount) {
                     Debug.LogFormat("[Forget Me Now #{0}] Module solved!", moduleId);
                     moduleStatus = 3;
-                    Audio.PlaySoundAtTransform("FMNow_WeDidItReddit", transform);
-                    GetComponent<KMBombModule>().HandlePass();
+
+                    if (autosolved == false)
+                        Audio.PlaySoundAtTransform("FMNow_WeDidItReddit", transform);
+
+                    else
+                        Audio.PlaySoundAtTransform("FMNow_Autosolve", transform);
+
+                     GetComponent<KMBombModule>().HandlePass();
                     hereWeGo = false;
                 }
 
                 // Voice clip
-                if (hereWeGo == true) {
+                if (hereWeGo == true && autosolved == false) {
                     Audio.PlaySoundAtTransform("FMNow_HereWeGo", transform);
                     hereWeGo = false;
                 }
@@ -256,7 +292,7 @@ public class ForgetMeNow : MonoBehaviour {
 
     // Displays the digits
     private IEnumerator DisplayDigits() {
-        for (int i = 0; i < moduleCount && moduleStatus == 1; i++) {
+        for (int i = 0; i < moduleCount; i++) {
             // Displays stage number
             DisplayStage(i);
 
@@ -264,14 +300,20 @@ public class ForgetMeNow : MonoBehaviour {
             DisplayScreen.text = displayDigits[i].ToString();
 
             // Plays a sound for each stage
-            if (i >= 24)
+            if (autosolved == true || FASTMODE == true)
+                Audio.PlaySoundAtTransform("FMNow_Click", transform);
+
+            else if (i >= 24)
                 Audio.PlaySoundAtTransform("FMNow_Groove", transform);
 
             else
                 Audio.PlaySoundAtTransform("FMNow_Bass", transform);
 
             // Delay between the displayed digits
-            if (i > 20)
+            if (autosolved == true || FASTMODE == true)
+                yield return new WaitForSeconds(0.05f);
+
+            else if (i > 20)
                 yield return new WaitForSeconds(delay[20]);
 
             else
@@ -281,12 +323,11 @@ public class ForgetMeNow : MonoBehaviour {
         // Displaying is finished
         InitiateInputScreen();
         Debug.LogFormat("[Forget Me Now #{0}] The sequence of digits has finished displaying. Input mode is now active.", moduleId);
-        // TP Force-solve command
-        if (moduleStatus == 2)
-            StartCoroutine(Solver());
+        moduleStatus = 2;
 
-        else
-            moduleStatus = 2;
+        // TP Force-solve command
+        if (autosolved == true)
+            StartCoroutine(Solver());
     }
 
     private void InitiateInputScreen() {
@@ -348,26 +389,74 @@ public class ForgetMeNow : MonoBehaviour {
             StageScreen.text = 0 + stageNo.ToString();
     }
 
+
+    // Module resets
+    private IEnumerator ModuleReset() {
+        Debug.LogFormat("[Forget Me Now #{0}] Resetting the displayed digits.", moduleId);
+        moduleStatus = -1;
+        litButton = firstButtonPressed;
+        UpdateLED();
+        StageScreen.text = "--";
+        Audio.PlaySoundAtTransform("FMNow_Reset", transform);
+
+        yield return new WaitForSeconds(1.0f);
+
+        StartCoroutine(ScreenReset());
+        for (int i = moduleCount; i > 0; i--) {
+            DisplayStage(i - 1);
+            yield return new WaitForSeconds(3.0f / moduleCount);
+        }
+
+        StageScreen.text = "";
+
+        yield return new WaitForSeconds(3.0f);
+
+        litButton = -1;
+        UpdateLED();
+        moduleStatus = 1;
+        StartCoroutine(DisplayDigits());
+    }
+
+    // Display screen resets
+    private IEnumerator ScreenReset() {
+        int intValue = Math.Min(23, moduleCount - 1);
+        for (int value = intValue; value >= 0; value--) {
+            string str = "";
+
+            for (int i = 1; i <= value; i++) {
+                str += "-";
+
+                if (i % 3 == 0) {
+                    if (i % 12 == 0)
+                        str += "\n";
+
+                    else
+                        str += " ";
+                }
+            }
+
+            InputScreen.text = str;
+            yield return new WaitForSeconds(3.0f / (intValue + 1));
+        }
+    }
+
     
     // Twitch Plays - borrowed code from Forget Me Not with some edits
+
+    
 #pragma warning disable 414
-    private string TwitchHelpMessage = "Press one button with \"!{0} press 5\", or enter the sequence with \"!{0} press 531820...\". You may use spaces and commas.";
+    private string TwitchHelpMessage = "Press one button with \"!{0} press 5\", or enter the sequence with \"!{0} press 531820...\". You may use spaces and commas. Reset the displayed numbers with \"!{0} reset\", but only when all the digits are displayed and when nothing is inputted.";
 #pragma warning restore 414
 
     public void TwitchHandleForcedSolve() {
         Debug.LogFormat("[Forget Me Now #{0}] Module forcibly solved.", moduleId);
+        autosolved = true;
 
         if (moduleStatus == 2)
             StartCoroutine(Solver());
 
-        else if (moduleStatus == 0) {
-            InitiateInputScreen();
-            moduleStatus = 2;
-            StartCoroutine(Solver());
-        }
-
-        else if (moduleStatus == 1)
-            moduleStatus = 2;
+        else if (moduleStatus == 0)
+            Buttons[0].OnInteract();
     }
 
     private IEnumerator Solver() {
@@ -397,43 +486,58 @@ public class ForgetMeNow : MonoBehaviour {
         if (stage >= solutionDigits.Length) yield break;
         cmd = cmd.ToLowerInvariant();
 
-        int cut;
+        int cut = 0;
+        bool resetting = false;
         if (cmd.StartsWith("submit ")) cut = 7;
         else if (cmd.StartsWith("press ")) cut = 6;
+        else if (cmd.StartsWith("reset")) resetting = true;
         else {
-            yield return "sendtochaterror Use either 'submit' or 'press' followed by a number sequence.";
+            yield return "sendtochaterror Use either 'submit' or 'press' followed by a number sequence, or 'reset'.";
             yield break;
         }
 
-        List<int> digits = new List<int>();
-        char[] strSplit = cmd.Substring(cut).ToCharArray();
-        foreach (char c in strSplit) {
-            if (!"0123456789 ,".Contains(c)) {
-                yield return "sendtochaterror Invalid character in number sequence: '" + c + "'.\nValid characters are 0-9, space, and comma.";
+        if (resetting == true) {
+            if (moduleStatus != 2 || stage != 0)
+                yield return "sendtochaterror The module cannot be reset right now.";
+
+            else
+                StartCoroutine(ModuleReset());
+
+            yield return "Forget Me Now";
+            yield break;
+        }
+
+        else {
+            List<int> digits = new List<int>();
+            char[] strSplit = cmd.Substring(cut).ToCharArray();
+            foreach (char c in strSplit) {
+                if (!"0123456789 ,".Contains(c)) {
+                    yield return "sendtochaterror Invalid character in number sequence: '" + c + "'.\nValid characters are 0-9, space, and comma.";
+                    yield break;
+                }
+
+                int d = GetDigit(c);
+                if (d != -1) digits.Add(d);
+            }
+            if (digits.Count == 0) yield break;
+            if (digits.Count > (solutionDigits.Length - stage)) {
+                yield return "sendtochaterror Too many digits submitted.";
                 yield break;
             }
 
-            int d = GetDigit(c);
-            if (d != -1) digits.Add(d);
-        }
-        if (digits.Count == 0) yield break;
-        if (digits.Count > (solutionDigits.Length - stage)) {
-            yield return "sendtochaterror Too many digits submitted.";
-            yield break;
-        }
-
-        int progress = moduleCount;
-        if (progress < solutionDigits.Length) {
+            int progress = moduleCount;
+            if (progress < solutionDigits.Length) {
+                yield return "Forget Me Now";
+                Buttons[digits[0]].OnInteract();
+                yield break;
+            }
             yield return "Forget Me Now";
-            Buttons[digits[0]].OnInteract();
+
+            foreach (int d in digits) {
+                Buttons[d].OnInteract();
+                yield return new WaitForSeconds(0.05f);
+            }
             yield break;
         }
-        yield return "Forget Me Now";
-
-        foreach (int d in digits) {
-            Buttons[d].OnInteract();
-            yield return new WaitForSeconds(0.05f);
-        }
-        yield break;
     }
 }
