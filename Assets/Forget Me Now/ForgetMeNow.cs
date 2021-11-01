@@ -41,9 +41,9 @@ public class ForgetMeNow : MonoBehaviour {
     private int moduleStrikes = 0; // Number of times module has struck
 
     // Testing purposes only
-    private const int STAGES = 1;
-    private const bool USETEST = false;
-    private const bool FASTMODE = false;
+    private const int STAGES = 24;
+    private const bool USETEST = false; // false
+    private const bool FASTMODE = false; // false
 
     // "Here we go!" voice clip
     private bool hereWeGo = false;
@@ -80,7 +80,7 @@ public class ForgetMeNow : MonoBehaviour {
 
     // Gets edgework and sets up calculations
     private void Start () {
-        if (USETEST == true)
+        if (USETEST)
             moduleCount = STAGES;
 
         else
@@ -346,9 +346,11 @@ public class ForgetMeNow : MonoBehaviour {
         // Displays in two groups of 12 stages.
         int currentStage = stage;
         int startingStage = 0;
+        int finalStage = moduleCount;
 
-        while (currentStage > 24) {
+        while (currentStage > 23 && finalStage != 24) {
             currentStage -= 12;
+            finalStage -= 12;
             startingStage += 12;
         }
 
